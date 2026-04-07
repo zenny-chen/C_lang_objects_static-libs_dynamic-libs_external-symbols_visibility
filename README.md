@@ -1,0 +1,2 @@
+# C_lang_objects_static-libs_dynamic-libs_external-symbols_visibility
+C语言对目标文件、静态库与动态库的连接及外部符号的可见性
