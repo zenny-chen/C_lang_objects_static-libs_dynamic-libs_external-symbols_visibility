@@ -304,33 +304,43 @@ dumpbin /ALL C:\my-programs\vc-projects\libfunc\x64\Release\libfunc.lib
 <a id="windows_link_static_library" name="windows_link_static_library"></a>
 #### Windows系统下使用 Visual Studio 连接静态库
 
-我们接下来利用Visual Studio创建一个C语言的控制台应用项目。我们同样先打开Visual Studio，然后点击“创建新项目”，然后选择“C++控制台应用”，如下图所示。
-![vslib20.png](https://i-blog.csdnimg.cn/blog_migrate/75c426db8612b253c01d9580b3b12421.png)
+我们接下来利用 Visual Studio 创建一个C语言的控制台应用项目。我们同样先打开 Visual Studio，然后点击“创建新项目”，然后选择“C++控制台应用”，如下图所示。
+
+![vs2022_wizard_app](images/vs2022_wizard_app.png)
 
 然后，我们为当前项目命名，这里使用 **main_test**，如下图所示。
-![vslib21.png](https://i-blog.csdnimg.cn/blog_migrate/ef9fd5471ee28e23a99f1b6162cb6c7a.png)
+
+![vs2022_name_app](images/vs2022_name_app.png)
 
 点击“创建”按钮之后，我们进入项目。跟创建静态库项目时一样，我们将项目模板里自动生成的 main_test.cpp 删除，然后将我们刚自己编辑好的 main_test.c 加入到当前项目中。随后，我们将刚才生成好的 **libfunc.lib** 也放到该目录，如下图所示。
-![vslib22.png](https://i-blog.csdnimg.cn/blog_migrate/54ddfedf10253b831ef00daa2debb6d9.png)
+
+![project_add_libs](images/project_add_libs.png)
 
 随后，我们将 main_test.c 添加到当前项目中。然后设置 **main_test** 项目属性，这里跟之前静态库项目一样配置编程语言选项，然后这里主要需要配置“链接器”选项，如下图所示。
-![vslib23.png](https://i-blog.csdnimg.cn/blog_migrate/8e2bb965aeaf4d51b3c5ff4c633cc635.png)
+
+![properties_link_inputs](images/properties_link_inputs.png)
  
 我们展开“链接器”，然后点击“输入”，再在“附加依赖项”中添加 **`libfunc.lib;`**。注意这里需要用分号（**;**）分隔符。点击“确认”按钮之后，我们点击工具栏中的绿色小三角就能编译运行整个程序了。运行之后会出现如下输出：
+
+```shell
 > This is FuncA!
 This is InternalFunc for FuncA!
 This is FuncB!
 This is InternalFunc for FuncB!
-\
+
 C:\my-programs\vc-projects\main_test\x64\Release\main_test.exe (进程 85716)已退出，代码为 0。
 要在调试停止时自动关闭控制台，请启用“工具”->“选项”->“调试”->“调试停止时自动关闭控制台”。
 按任意键关闭此窗口. . .
+```
 
 下面，我们再使用 **`dumpbin.exe`** 来观察所生成可执行文件中的符号：
+
 ```bash
 dumpbin /ALL C:\my-programs\vc-projects\main_test\x64\Release\main_test.exe
 ```
-尽管这条命令会dump出非常多的信息，但我们自己搜一下 **FuncA**，则只能在字符串常量中找到该符号，相当于默认启用了移除所有符号的功能。我们这里只能找到关于 **`main`** 函数的符号信息：
+
+尽管这条命令会 dump 出非常多的信息，但我们自己搜一下 **FuncA**，则只能在字符串常量中找到该符号，相当于默认启用了移除所有符号的功能。我们这里只能找到关于 **`main`** 函数的符号信息：
+
 ```bash
 Function Table (30)
 
@@ -347,7 +357,8 @@ Function Table (30)
 
 <br/>
 
-## <a id="dynamic_library"></a> 动态连接库
+<a id="dynamic_library" name="dynamic_library"></a>
+## 动态连接库
 
 一个动态连接库是一个经过初步连接的、可被可执行程序或其他动态连接库在程序加载时被加载，亦可被执行程序在运行时加载的库。因此，一个动态连接库具有“连接”属性，可直接连接其他静态库或是引用其他动态连接库中的符号。
 
@@ -355,11 +366,13 @@ Function Table (30)
 
 <br  />
 
-#### <a id="linux_dynamic_library"></a> Linux系统下创建并使用动态连接库
+<a id="linux_dynamic_library" name="linux_dynamic_library"></a>
+#### Linux系统下创建并使用动态连接库
 
-Linux系统下倘若我们使用GCC编译工具链来创建一个动态连接库，可使用 **`-shared`** **连接器选项** 进行生成。此外，对于较老的GCC编译器以及GLIBC库，Linux系统还指定了动态连接库中的外部符号必须是 **位置独立的**（**Position-Independent**），因此如果我们要考虑系统兼容性，那么对于任何后续将要作为一个动态连接库进行连接的目标文件必须使用 **`-fPIC`** 这一 **编译选项** 进行指定。
+Linux系统下倘若我们使用 GCC 编译工具链来创建一个动态连接库，可使用 **`-shared`** **连接器选项** 进行生成。此外，对于较老的 GCC 编译器以及 GLIBC 库，Linux 系统还指定了动态连接库中的外部符号必须是 **位置独立的**（**Position-Independent**），因此如果我们要考虑系统兼容性，那么对于任何后续将要作为一个动态连接库进行连接的目标文件必须使用 **`-fPIC`** 这一 **编译选项** 进行指定。
 
 下面，我们创建一个新的C源文件——**dfunc.c** 用于后续生成一个动态库，此外它还会调用之前已经创建好的 **libfunc.a** 静态库中的函数。我们先看以下代码：
+
 ```c
 // dfunc.c
 #include <stdio.h>
@@ -392,9 +405,11 @@ void FuncDummyD(void)
     puts("This is DummyD!");
 }
 ```
+
 该源文件定义了 **`CUSTOM_DLL_EXPORT`** 这个宏，但现在没用到。稍后会再做详细解释。我们看到这里又定义了两个全局函数——**`FuncD`** 及 **`FuncDummyD`**，稍后 **`FuncD`** 会被可执行程序调用到，而 **`FuncDummyD`** 则不会被引用到。
 
 接下来，我们修改一下 **main_test.c** 这个源文件，添加对 **dfunc.c** 中所包含的 **`FuncD`** 函数的调用：
+
 ```c
 // main_test.c
 
@@ -411,7 +426,9 @@ int main(int argc, const char* argv[])
     FuncD();
 }
 ```
+
 我们看到，这个源文件仍然很简单，这里仅仅添加了对 函数 **`FuncD`** 的调用，此外之前的 **`FuncA`** 和 **`FuncB`** 仍然也会被调用，如果我们就连接 稍后要生成的 **libdfunc.so** 看看是否能顺利通过构建和运行呢？下面我们就先看一下新的编译脚本：
+
 ```shell
 #! /bin/sh
 # build_test.sh
@@ -426,7 +443,9 @@ gcc main_test.c  -o main_test.c.o  -c -std=gnu17
 gcc main_test.c.o  -o main_test -s -L./ -ldfunc
 rm afunc.c.o bfunc.c.o dfunc.c.o main_test.c.o libfunc.a
 ```
+
 上述编译脚本中我们可以发现没有对任何源文件使用 **`-fPIC`** 编译选项，由于在笔者当前所使用的 **Ubuntu 20.04** 结合 **GCC 9.4** 编译工具链下是可正常工作的。如果我们为了老平台的兼容性，则需要指定使用 **`-fPIC`** 这一编译选项，如下所示：
+
 ```bash
 #! /bin/sh
 # build_test.sh
@@ -441,6 +460,7 @@ gcc main_test.c  -o main_test.c.o  -c -std=gnu17
 gcc main_test.c.o  -o main_test -s -L./ -ldfunc
 rm afunc.c.o bfunc.c.o dfunc.c.o main_test.c.o libfunc.a
 ```
+
 我们看到，上述编译脚本中，对 **afunc.c**、**bfunc.c** 以及 **dfunc.c** 均使用了 **`-fPIC`** 编译选项。
 
 上述代码第5行新增了对 **dfunc.c** 源文件的编译，这个跟其他源文件相比没有任何差异。而在第9行就是将 **dfunc.c.o** 同之前生成好的静态库 **libfunc.a** 进行连接，生成最终的动态连接库：**libdfunc.so**。我们可以发现，动态库的生成仍然可以直接使用gcc命令，并加以 **`-shared`** 连接器选项进行修饰指定。
@@ -448,13 +468,17 @@ rm afunc.c.o bfunc.c.o dfunc.c.o main_test.c.o libfunc.a
 而在第11行我们可以发现，此时最终可执行文件是单纯通过对 **libdfunc.so** 进行连接而生成，却不再依赖之前的静态库 **libfunc.a**。
 
 由于我们之前提到，动态连接库是在可执行程序被加载时进行符号载入，因此我们在执行一个可执行程序之前需要把它所依赖的所有动态连接库的路径给指定好，加载器会通过自己指定的动态连接库的路径以及系统环境默认路径进行搜索当前可执行文件所依赖的动态连接库文件。因此方便起见，这里又做了一个运行脚本来快速启动我们现在生成好的 **main_test** 可执行程序：
+
 ```shell
 #! /bin/sh
 # run.sh
 export LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH}
 ./main_test
 ```
+
 Linux系统下是通过 **`LD_LIBRARY_PATH`** 这一环境变量来指定动态连接库的搜索路径的。我们可在当前目录下直接执行 `sh run.sh` 即可执行程序，然后可得到以下输出：
+
+```shell
 > This is FuncA!
 This is InternalFunc for FuncA!
 This is FuncB!
@@ -465,13 +489,16 @@ This is FuncA!
 This is InternalFunc for FuncA!
 This is FuncB!
 This is InternalFunc for FuncB!
+```
 
 我们能看到，该程序可顺利执行并得到我们所期待的结果。从而我们也能知道，原本 **libfunc.a** 静态库中的函数也确实被连入了 **libdfunc.so** 之中。
 
 接下来，我们可以再次使用 **readelf** 工具来查看 **libdfunc.so** 中的符号情况。我们先输入以下命令：
+
 ```bash
 readelf -s libdfunc.so
 ```
+
 然后我们就看开始的动态符号一栏—— **Symbol table '.dynsym' contains 12 entries**。我们发现，原本 **libfunc.a** 中的外部全局函数，以及 **dfunc.c.o** 中的两个外部全局函数都包含在了 **libdfunc.so** 之中。
 
 Num | Value | Size | Type | Bind | Vis | Ndx | Name
@@ -484,30 +511,36 @@ Num | Value | Size | Type | Bind | Vis | Ndx | Name
 11: | 120e | 28 | FUNC | GLOBAL | DEFAULT | 14 | FuncB
 
 此时我们会思考，由于 `FuncDummyA`、`FuncDummyB` 和 `FuncDummyD` 这三个函数没有被外部引用到，而且也不想暴露给外部其他动态连接库或可执行程序所调用，那我们是否能把它们从 **libdfunc.so** 中移除掉呢？我们先尝试对上述编译脚本中的第9行添加 **`-s`** 连接器选项，如下所示：
+
 ```bash
 gcc dfunc.c.o  -o libdfunc.so -shared -s -L./ -lfunc
 ```
+
 然后，我们编译之后的结果仍然与上面一样，所有的外部符号都在！为何动态连接库使用 **`-s`** 连接器选项之后行为与可执行文件不同呢？
 
 因为在类Unix系统中，动态连接库在默认情况下，其中的外部符号，包括全局函数（**global function**）以及全局对象（**global object**）都是可被其他动态连接库或可执行文件访问的。这也是为何在类Unix系统中将动态连接库称为共享目标库（**shared object** library）的道理。因而我们在上述代码例子中可见，在可执行程序 **main_test** 中可直接访问 **libdfunc.so** 中的所有外部符号，包括它所连接的 **libfunc.a** 中的全局函数。
 
 不过对于软件的模块化设计以及接口抽象原则设计而言，我们将所有外部符号暴露出去，一来肯定影响封装性，二来也对二进制目标的保密性和抽象性也受到很大影响！所以我们是否能把自己想要的符号暴露出去，而把其他全局函数或对象给默认隐藏呢？
 
-类Unix系统搭配GCC和LLVM-Clang工具链提供了这种符号可见性机制，即 **visibility**。它是一个 **编译选项**，并含有四种值，分别是：**`default`**（默认），**`hidden`**（隐藏），**`internal`**（内部），以及 **`protected`**（受保护的）。下面我们分别来介绍一下这四种可见性模式：
+类 Unix 系统搭配 GCC 和 LLVM-Clang 工具链提供了这种符号可见性机制，即 **visibility**。它是一个 **编译选项**，并含有四种值，分别是：**`default`**（默认），**`hidden`**（隐藏），**`internal`**（内部），以及 **`protected`**（受保护的）。下面我们分别来介绍一下这四种可见性模式：
+
 1. **`default`**（默认）：默认可见性是 [**ELF**](http://flint.cs.yale.edu/cs422/doc/ELF_Format.pdf) 二进制目标文件格式的“正常”情况。如果某一外部符号使用了这种可见性属性，那么该符号可被其他动态库或可执行文件访问，并且也能覆盖同一符号的其他可见性属性。比如说，有一个 **liba.so** 动态连接库中定义了一个默认可见性的全局函数 **Foo**，而在 **libb.so** 动态连接库中定义了一个隐藏可见性或是受保护可见性的全局函数 **Foo**，那么当一个可执行程序既加载 **liba.so** 又加载 **libb.so** 时，**liba.so** 中的默认可见性的 **Foo** 将会覆盖掉 **libb.so** 中的 **Foo**。从而在可执行程序中调用的 **Foo** 将是 **liba.so** 中的实现。
-2. **`hidden`**（隐藏）：隐藏可见性指示了该符号不会被放置到动态符号表中，从而其他模块（可执行程序或动态库）无法直接引用它。
-3. **`internal`**（内部）：内部可见性类似于隐藏可见性，但它含有额外的处理器特定语义。除非我们指定了 **psABI** 编译选项，否则GCC定义了内部可见性使得当前函数永远不会被其他模块调用。要注意的是，尽管隐藏符号无法被其他模块所引用，但它们可以通过函数指针进行间接引用。通过指示一个符号无法从当前模块外部被调用，GCC比方说，可以忽略对一个PIC寄存器的加载，由于它已经知道该调用函数已经加载了正确的值。
-4. **`protected`**（受保护的）：受保护的可见性指示了该符号将会被放在动态符号表（即 **Symbol table '.dynsym'**）中，但在定义该符号的模块内的引用将会绑定到局部符号。也就是说，该符号不能被其他模块所覆盖。
+1. **`hidden`**（隐藏）：隐藏可见性指示了该符号不会被放置到动态符号表中，从而其他模块（可执行程序或动态库）无法直接引用它。
+1. **`internal`**（内部）：内部可见性类似于隐藏可见性，但它含有额外的处理器特定语义。除非我们指定了 **psABI** 编译选项，否则GCC定义了内部可见性使得当前函数永远不会被其他模块调用。要注意的是，尽管隐藏符号无法被其他模块所引用，但它们可以通过函数指针进行间接引用。通过指示一个符号无法从当前模块外部被调用，GCC比方说，可以忽略对一个PIC寄存器的加载，由于它已经知道该调用函数已经加载了正确的值。
+1. **`protected`**（受保护的）：受保护的可见性指示了该符号将会被放在动态符号表（即 **Symbol table '.dynsym'**）中，但在定义该符号的模块内的引用将会绑定到局部符号。也就是说，该符号不能被其他模块所覆盖。
 
 一般而言，我们常用的两个值为 **`default`** 和 **`hidden`**。在GNU语法扩展中，我们可以使用 **`__attribute__((visibility("vis")))`** 来指定当前全局函数或对象的可见性。这里的 ***vis*** 就是上述四个值的其中一种。
 
 下面我们来做两件事，一件是对 **dfunc.c** 中的 **`FuncD`** 用 **`__attribute__((visibility("default")))`** 修饰，以指示它可被外部调用。第二件事，对其他源文件的编译使用 **`-fvisibility=hidden`** 这一 **编译选项**，使得所有没有显式用可见性属性修饰的全局对象与函数，全都默认使用“隐藏”可见性。
 
 我们先对 **dfunc.c** 的第17行修改为：
+
 ```c
 void CUSTOM_DLL_EXPORT FuncD(void)
 ```
+
 随后，重新修改 **build_test.sh** 编译脚本文件，如下所示：
+
 ```bash
 #! /bin/sh
 # build_test.sh
@@ -522,6 +555,7 @@ gcc main_test.c  -o main_test.c.o  -c -std=gnu17
 gcc main_test.c.o  -o main_test -s -L./ -ldfunc -lfunc
 rm afunc.c.o bfunc.c.o dfunc.c.o main_test.c.o libfunc.a
 ```
+
 我们看到这里主要做两四处修改。前三处是3、4、5行，在后面均新增了 **`-fvisibility=hidden`** 编译选项。而第四处则是第11行，再次新增了 **`-lfunc`**，对 **libfunc.a** 静态库的连接。由于 **libdfunc.so** 中关于 **libfunc.a** 静态库的外部符号都被 **隐藏** 了，因此外部模块无法再被使用。因而可执行程序模块 **main_test** 必须再度显式连接 **libfunc.a** 静态库。
 
 由此我们也能认识到，“可见性”属性只针对动态连接库以及可执行程序这些具有连接属性的模块起作用，而静态库中的外部符号的可见性是在被连接到具有连接属性的模块之后才起作用的。所以，这里 **libdfunc.so** 中的 **`FuncA`**、**`funcB`** 等函数均对外隐藏了。 我们执行完 `sh build_test.sh` 命令之后，再次使用 `readelf -s libdfunc.so` 命令来查看此时的 **libdfunc.so** 中的符号情况。
@@ -530,42 +564,54 @@ rm afunc.c.o bfunc.c.o dfunc.c.o main_test.c.o libfunc.a
 
 <br/>
 
-#### <a id="windows_dynamic_library"></a> Windows系统下创建并使用动态连接库
-接着，我们将给各位介绍如何在Windows系统下使用Visual Studio IDE来创建一个动态连接库项目工程，并最终连接到可执行程序中。
+<a id="windows_dynamic_library" name="windows_dynamic_library"></a>
+#### Windows系统下创建并使用动态连接库
 
-我们首先打开Visual Studio，然后点击“创建新项目”，在项目模板中选择“动态链接库(DLL)”，如下图所示。
-![dll-1](https://i-blog.csdnimg.cn/blog_migrate/8404bd420608f2466deb2f1ef6163c79.png#pic_center)
+接着，我们将给各位介绍如何在 Windows 系统下使用 Visual Studio IDE 来创建一个动态连接库项目工程，并最终连接到可执行程序中。
 
-点击“下一步”，然后为当前项目命名，这里笔者仍然起与Linux系统上一样的名“libdfunc”。完了之后，点击“创建”按钮。
-![dll-2](https://i-blog.csdnimg.cn/blog_migrate/b3cd06e4f73da79364d68869fbc3293a.png#pic_center)
+我们首先打开 Visual Studio，然后点击“创建新项目”，在项目模板中选择“动态链接库(DLL)”，如下图所示。
 
+![vs2022_wizard_dll](images/vs2022_wizard_dll.png)
+
+点击“下一步”，然后为当前项目命名，这里笔者仍然起与 Linux 系统上一样的名 “libdfunc”。完了之后，点击“创建”按钮。
+
+![vs2022_name_dll](images/vs2022_name_dll.png)
 
 进入项目之后，我们先把没必要的文件全都删除。如下图红框框出来的部分。
-![dll-3](https://i-blog.csdnimg.cn/blog_migrate/43c6cad41130e7dc459dfb95879eee5f.png#pic_center)
+
+![project_remove_dll](images/project_remove_dll.png)
 
 随后将我们之前编辑好的 **dfunc.c** 以及之前生成好的 **libfunc.lib** 放到当前项目目录中，然后再将 **dfunc.c** 源文件添加到当前项目工程中。
-![dll-4](https://i-blog.csdnimg.cn/blog_migrate/cf4f5729f9eaec7f0aa712ad0c46ec3e.png#pic_center)
+
+![project_add_srcs](images/project_add_srcs.png)
+
 之后，我们同样编辑 **libdfunc** 项目属性，将一些值改为如下图红框框出来所示的样子。
 
-![dll-5](https://i-blog.csdnimg.cn/blog_migrate/5a94ade0a1b912757f8ad9679e781169.png#pic_center)
+![properties_common_dll](images/properties_common_dll.png)
 
 随后，我们同样将“预编译头”去除，如下图所示。
-![dll-6](https://i-blog.csdnimg.cn/blog_migrate/76e5397d5e6af1ce4ec28b9aa7e0f1e6.png#pic_center)
+
+![properties_preprocessing_dll](images/properties_preprocessing_dll.png)
 
 最后，我们设置“链接器”选项，在其“输入”一栏中的“附加依赖项”中添加：**`libfunc.lib;`**，添加对静态库 **libfunc.lib** 的连接。这里需要注意的是，Windows系统下的分隔符一般使用分号 **`;`**。
-![dll-7](https://i-blog.csdnimg.cn/blog_migrate/b4afc8675fb001cb650b05a856bec7a4.png#pic_center)
+
+![properties_linker_inputs_dll](images/properties_linker_inputs_dll.png)
 
 我们经过上述步骤的设置之后就可以点击工具栏上的绿色三角箭头按钮，构建生成 **libdfunc.dll** 了。
 
 接下来，我们可以同上面观察静态库的符号那些操作一样，通过在开始菜单下找到Visual Studio，然后点击“x64 Native Tools Command Prompt for VS 2022”，进入命令行。这次我们先用 **`cd`** 命令进入到当前项目的根目录，然后输入以下命令：
+
 ```bash
 dumpbin /ALL x64/Release/libdfunc.dll
 ```
+
 我们可以发现，当前 **libdfunc.dll** 中只有 **`FuncD`** 这一个外部符号输出：
+
+```shell
 > Function Table (37)
-\
+
            Begin    End      Info      Function Name
-\
+
   00000000 00001000 00001057 00002740  FuncD
     Unwind version: 1
     Unwind flags: None
@@ -573,16 +619,18 @@ dumpbin /ALL x64/Release/libdfunc.dll
     Count of codes: 1
     Unwind codes:
     04: ALLOC_SMALL, size=0x28
-
+```
 
 最后，我们进入 **`x64/Release/`** 目录，将里面生成好的 **libfunc.lib** 与 **libdfunc.dll** 复制出来：
-![dll-8](https://i-blog.csdnimg.cn/blog_migrate/a858ec7e13bd9bbc8e8c84771e41cc28.png#pic_center)
 
+![copy_libs](images/copy_libs.png)
 
 然后黏贴到我们之前创建好的 **main_test** 项目目录中。我们现在打开  **main_test** 项目的解决方案文件——**main_test.sln**。进入后再度编辑其项目属性，选择“链接器”选项的“输入”一栏，在“附加依赖项”中添加 **libdfunc.lib**。
-![dll-9](https://i-blog.csdnimg.cn/blog_migrate/8ac6bf275a4e8eee5d6d7f053a785482.png#pic_center)
+
+![app_linker_add_libs](images/app_linker_add_libs.png)
 
 随后，我们再重新编辑一下 **main_test.c**，如下所示：
+
 ```c
 #include <stdio.h>
 
@@ -597,9 +645,12 @@ int main(int argc, const char* argv[])
     FuncD();
 }
 ```
-上述代码中我们看到，在Windows系统下使用MSVC编译器的时候，使用 **`__declspec(dllimport)`** 这一属性来指示，当前外部函数或对象是通过动态连接库（dll）导入进来的。
+
+上述代码中我们看到，在 Windows 系统下使用 MSVC 编译器的时候，使用 **`__declspec(dllimport)`** 这一属性来指示，当前外部函数或对象是通过动态连接库（dll）导入进来的。
 
 最后，我们直接点击工具栏中的三角按钮即可编译运行 **main_test.exe** 程序了。这里不会有任何编译问题，也没有运行时问题。我们可以得到以下输出：
+
+```shell
 > This is FuncA!
 This is InternalFunc for FuncA!
 This is FuncB!
@@ -610,37 +661,45 @@ This is FuncA!
 This is InternalFunc for FuncA!
 This is FuncB!
 This is InternalFunc for FuncB!
+```
 
-因为Windows系统会将当前路径默认作为动态连接库的搜索路径，因此当我们可执行文件与dll文件放在同一目录下时，我们能成功运行该可执行程序。但如果我们的可执行文件与dll文件放在不同路径，那么我们要么通过设置系统中的环境变量 **`PATH`** 进行指定，要么跟Linux系统一样，通过在执行可执行程序之前设置一下 **`PATH`** 环境变量以顺利运行。
+因为 Windows 系统会将当前路径默认作为动态连接库的搜索路径，因此当我们可执行文件与dll文件放在同一目录下时，我们能成功运行该可执行程序。但如果我们的可执行文件与dll文件放在不同路径，那么我们要么通过设置系统中的环境变量 **`PATH`** 进行指定，要么跟Linux系统一样，通过在执行可执行程序之前设置一下 **`PATH`** 环境变量以顺利运行。
 
 在Visual Studio IDE中，我们可以通过设置“调试”配置属性中的“环境”项来指定动态连接库的搜索路径，如下图所示：
-![dll-10](https://i-blog.csdnimg.cn/blog_migrate/b2bc8eaef961a230ebf3c6e9d1fd444d.png#pic_center)
+
+![app_debug_env](images/app_debug_env.png)
 
 这里相当于使用了这个命令：
+
 ```bash
 set PATH=./;%PATH%
 ```
-这里再次提醒，Windows系统下使用分号 **`;`** 作为列表分隔符；而类Unix系统下一般使用冒号 **`:`**。所以我们也可以将 **`PATH`** 的设置写在一个 **bat** 文件中，然后紧接着执行指定的可执行文件，就跟类Unix系统中的shell脚本类似。
+
+这里再次提醒，Windows 系统下使用分号 **`;`** 作为列表分隔符；而类Unix系统下一般使用冒号 **`:`**。所以我们也可以将 **`PATH`** 的设置写在一个 **bat** 文件中，然后紧接着执行指定的可执行文件，就跟类 Unix 系统中的 shell 脚本类似。
 
 <br/>
 
-## <a id="dll_runtime"></a> 运行时动态加载动态连接库中的符号
+<a id="dll_runtime" name="dll_runtime"></a>
+## 运行时动态加载动态连接库中的符号
 
-我们之前已经提到过，动态连接库除了可以在程序被操作系统加载时做符号加载之外，我们还能在程序运行时，通过系统API进行选择性地动态加载自己所需要的符号。下面我们将分别通过Linux系统与Windows系统环境来为各位描述如何在可执行程序中动态加载动态连接库中的符号。
+我们之前已经提到过，动态连接库除了可以在程序被操作系统加载时做符号加载之外，我们还能在程序运行时，通过系统API进行选择性地动态加载自己所需要的符号。下面我们将分别通过 Linux 系统与 Windows 系统环境来为各位描述如何在可执行程序中动态加载动态连接库中的符号。
 
 <br/>
 
-#### <a id="dll_runtime_linux"></a> Linux系统中运行时动态加载动态连接库中的符号
+<a id="dll_runtime_linux" name="dll_runtime_linux"></a>
+#### Linux系统中运行时动态加载动态连接库中的符号
 
 在类Unix系统环境下，我们通过 [**dlopen**](https://linux.die.net/man/3/dlopen) 系API做动态连接库的运行时加载。我们在使用该API时需要引入头文件：**`<dlfcn.h>`**，然后在程序连接时需要连接 **libdl.so**，因而需要使用 **`-ldl`** 连接选项。
 
 该库具有四个接口，分别是： 
+
 - `void *dlopen(const char *filename, int flag);`：用于打开指定的动态连接库文件。第二个参数往往使用 **`RTLD_LAZY`** 即可。
 - `void *dlsym(void *handle, const char *symbol);`：加载指定动态连接库中的指定符号。
 - `int dlclose(void *handle);`：关闭指定的动态库句柄。如果当前对同一动态库的所有句柄被关闭，那么它就会卸载所有该动态库中的符号，最后再关闭该动态库文件。
 - `char *dlerror(void);`：用于查询当前动态加载库的过程中所产生的错误信息。
 
 下面我们通过修改 **main_test.c** 中的相关内容来为大家展示这些接口的使用方式。
+
 ```c
 // main_test.c
 
@@ -676,18 +735,21 @@ int main(int argc, const char* argv[])
     dlclose(soHandle);
 }
 ```
+
 完成之后，我们再修改一下 **build_test.sh** 脚本文件中的第11行，移除对 **libdfunc.so** 的连接，并在最后添加 **`-ldl`** 连接选项：`gcc main_test.c.o  -o main_test -s -L./ -lfunc -ldl`。
 
 最后，我们就可以通过执行运行脚本：`sh run.sh` 来执行该程序了。
 
 <br/>
 
-#### <a id="dll_runtime_windows"></a> Windows系统中运行时动态加载动态连接库中的符号
+<a id="dll_runtime_windows" name="dll_runtime_windows"></a>
+#### Windows系统中运行时动态加载动态连接库中的符号
 
 Windows系统中，我们通过直接引入 **`<Windows.h>`** 头文件即可访问动态库加载API。而真正的用于动态连接库加载的API是声明在了 [**libloaderapi.h**](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/) 之中。在Windows系统中，一般常用的动态加载库的接口有：
-- [HMODULE LoadLibraryA( [in] LPCSTR lpLibFileName);](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya)：用于加载一个指定路径的动态连接库，并返回对应的句柄。
-- [FARPROC GetProcAddress([in] HMODULE hModule, [in] LPCSTR  lpProcName);](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress)：用于获得指定动态连接库中的指定符号。
-- [BOOL FreeLibrary([in] HMODULE hLibModule);](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary)：释放指定的动态连接库句柄。
+
+- [`HMODULE LoadLibraryA( [in] LPCSTR lpLibFileName);`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya)：用于加载一个指定路径的动态连接库，并返回对应的句柄。
+- [`FARPROC GetProcAddress([in] HMODULE hModule, [in] LPCSTR  lpProcName);`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress)：用于获得指定动态连接库中的指定符号。
+- [`BOOL FreeLibrary([in] HMODULE hLibModule);`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary)：释放指定的动态连接库句柄。
 
 下面我们就改写一下 **main_test.c** 来为大家展示一下这些API的用法：
 ```c
