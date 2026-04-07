@@ -751,7 +751,8 @@ Windows系统中，我们通过直接引入 **`<Windows.h>`** 头文件即可访
 - [`FARPROC GetProcAddress([in] HMODULE hModule, [in] LPCSTR  lpProcName);`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress)：用于获得指定动态连接库中的指定符号。
 - [`BOOL FreeLibrary([in] HMODULE hLibModule);`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary)：释放指定的动态连接库句柄。
 
-下面我们就改写一下 **main_test.c** 来为大家展示一下这些API的用法：
+下面我们就改写一下 **main_test.c** 来为大家展示一下这些 API 的用法：
+
 ```c
 #include <stdio.h>
 #include <Windows.h>
@@ -788,7 +789,7 @@ int main(int argc, const char* argv[])
     }
 }
 ```
-完成之后，我们直接点击工具栏上的绿色三角箭头按钮即可完成程序构建并直接运行。由于Windows系统上的动态加载库直接就已经定义在了 **kernel.dll** 以及 **kernel.lib** 之中，而这系统库文件是被MSVC编译工具链自动连接的，因此无需我们手工再去指定。当然，我们可以把之前连接的 **libdfunc.lib** 的连接给去掉，尽管不去也没问题。
 
+完成之后，我们直接点击工具栏上的绿色三角箭头按钮即可完成程序构建并直接运行。由于 Windows 系统上的动态加载库直接就已经定义在了 **kernel.dll** 以及 **kernel.lib** 之中，而这系统库文件是被 MSVC 编译工具链自动连接的，因此无需我们手工再去指定。当然，我们可以把之前连接的 **libdfunc.lib** 的连接给去掉，尽管不去也没问题。
 
 
